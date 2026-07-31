@@ -1,0 +1,9 @@
+node_modules/
+cheez-db.json
+out.log
+err.log
+public/uploads/
+*.log
+.DS_Store
+.env
+.env.local

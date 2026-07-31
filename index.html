@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تشيز - Cheez</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- LOGIN / REGISTER SCREEN -->
+  <div id="auth-screen" class="screen active">
+    <div class="auth-bg"></div>
+    <div class="auth-container">
+      <div class="logo-section">
+        <div class="main-logo">🧀</div>
+        <h1 class="game-title">تشيز</h1>
+        <p class="game-subtitle">لعبة الورق الاستراتيجية</p>
+      </div>
+      
+      <div class="auth-card">
+        <div class="tabs">
+          <button class="tab active" data-tab="login">تسجيل الدخول</button>
+          <button class="tab" data-tab="register">حساب جديد</button>
+        </div>
+        
+        <div class="tab-content active" id="login-form">
+          <div class="input-group">
+            <label>اليوزر</label>
+            <input type="text" id="login-username" placeholder="أدخل اليوزر الإنجليزي" autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="login-password" placeholder="••••••••">
+          </div>
+          <button class="btn-primary big" onclick="doLogin()">دخول 🚀</button>
+          <p class="error-msg" id="login-error"></p>
+        </div>
+        
+        <div class="tab-content" id="register-form">
+          <div class="input-group">
+            <label>اليوزر (حروف إنجليزية فقط، حرفين على الأقل)</label>
+            <input type="text" id="reg-username" placeholder="مثال: player1" autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label>كلمة المرور (4 أحرف على الأقل)</label>
+            <input type="password" id="reg-password" placeholder="••••••••">
+          </div>
+          <button class="btn-primary big" onclick="doRegister()">إنشاء حساب ✨</button>
+          <p class="error-msg" id="reg-error"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOBBY SCREEN -->
+  <div id="lobby-screen" class="screen">
+    <div class="top-bar">
+      <div class="user-card" onclick="openProfile()">
+        <img src="" alt="" id="lobby-user-pic" class="user-pic">
+        <div class="user-info">
+          <span class="username" id="lobby-username"></span>
+          <span class="user-stats">🏆 <span id="lobby-wins">0</span> | 🧀 <span id="lobby-cheez">0</span></span>
+        </div>
+      </div>
+      <div class="coins-badge">💰 <span id="lobby-coins">0</span></div>
+      <button class="btn-secondary" onclick="showFriends()">👥 الأصدقاء <span class="badge-pill" id="friend-req-badge" style="display:none">0</span></button>
+      <button class="btn-secondary" onclick="showShop()">🛒 المتجر</button>
+      <button class="btn-secondary" onclick="showLeaderboard()">الترتيب 🏆</button>
+      <button class="btn-danger" onclick="logout()">تسجيل خروج</button>
+    </div>
+
+    <div class="lobby-container">
+      <div class="lobby-header">
+        <h2>🎮 صالة التشيز</h2>
+        <button class="btn-primary big-btn" onclick="showCreateRoom()">➕ إنشاء غرفة</button>
+      </div>
+
+      <div class="rooms-grid" id="rooms-list">
+        <div class="empty-state">
+          <div class="empty-icon">🎪</div>
+          <p>لا توجد غرف حالياً، أنشئ غرفتك الآن!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOM SCREEN -->
+  <div id="room-screen" class="screen">
+    <div class="top-bar">
+      <button class="btn-secondary" onclick="leaveRoom()">⬅️ للخلف</button>
+      <h2 class="room-name" id="room-name">الغرفة</h2>
+      <div class="room-status" id="room-status">في انتظار اللاعبين...</div>
+    </div>
+
+    <div class="room-container">
+      <div class="players-section">
+        <h3>👥 اللاعبين (<span id="players-count">0</span>/<span id="players-max">4</span>)</h3>
+        <div class="players-list" id="players-list"></div>
+      </div>
+
+      <div class="room-controls">
+        <div class="config-card" id="host-controls" style="display:none;">
+          <h4>🎛️ إعدادات الغرفة</h4>
+          <div class="ai-buttons">
+            <button class="btn-secondary" onclick="addAI()">🤖 إضافة لاعب AI</button>
+            <button class="btn-secondary" onclick="removeAI()">❌ إزالة آخر AI</button>
+          </div>
+          <p class="ai-hint">اضغط على أي لاعب AI في القائمة لإزالته</p>
+          <button class="btn-primary big-btn" onclick="startGame()">🎯 ابدأ اللعبة</button>
+        </div>
+        <div class="guest-waiting" id="guest-controls">
+          <div class="waiting-icon">⏳</div>
+          <p>في انتظار المضيف لبدء اللعبة...</p>
+        </div>
+      </div>
+
+      <div class="chat-section">
+        <h3>💬 دردشة الغرفة</h3>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="اكتب رسالة..." onkeypress="if(event.key==='Enter')sendChat()">
+          <button class="btn-primary" onclick="sendChat()">إرسال</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen">
+    <div class="game-header">
+      <div class="gh-left">
+        <button class="btn-secondary small" onclick="leaveRoom()">🚪 خروج</button>
+      </div>
+      <div class="gh-center">
+        <div class="round-info">
+          <span class="cheez-badge" id="cheez-badge" style="display:none;">🧀 تشيز معلن!</span>
+        </div>
+      </div>
+      <div class="gh-right">
+        <div class="turn-indicator" id="turn-indicator">دور: -</div>
+      </div>
+    </div>
+
+    <div class="game-table">
+      <div class="top-players" id="opponents-area"></div>
+
+      <div class="center-area">
+        <div class="deck-pile" onclick="drawCard()">
+          <div class="pile-title">السحب</div>
+          <div class="card card-back deck-card">
+            <div class="card-pattern">🧀</div>
+          </div>
+          <div class="pile-count" id="deck-count">0</div>
+        </div>
+
+        <div class="discard-pile">
+          <div class="pile-title">الرمي</div>
+          <div class="card" id="discard-card">
+            <div class="empty-pile">فارغ</div>
+          </div>
+        </div>
+
+        <div class="action-banner" id="action-banner"></div>
+      </div>
+
+      <div class="my-area">
+        <div class="my-cards" id="my-cards"></div>
+        <div class="my-controls">
+          <button class="btn-cheez big-btn" id="cheez-btn" onclick="declareCheez()">🧀 أقول تشيز!</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-floating">
+      <div class="chat-toggle" onclick="toggleChat()">💬</div>
+      <div class="chat-panel" id="chat-panel">
+        <div class="chat-messages" id="game-chat-messages"></div>
+        <div class="chat-input-row">
+          <input type="text" id="game-chat-input" placeholder="رسالة..." onkeypress="if(event.key==='Enter')sendGameChat()">
+          <button class="btn-primary small" onclick="sendGameChat()">📨</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modal-overlay"></div>
+
+  <div class="modal" id="create-room-modal">
+    <div class="modal-content">
+      <h2>🏠 إنشاء غرفة جديدة</h2>
+      <div class="input-group">
+        <label>اسم الغرفة</label>
+        <input type="text" id="new-room-name" placeholder="مثال: غرفة أحمد" value="غرفة تشيز">
+      </div>
+      <div class="input-group">
+        <label>عدد اللاعبين</label>
+        <select id="new-room-max">
+          <option value="2">2 لاعبين</option>
+          <option value="3">3 لاعبين</option>
+          <option value="4" selected>4 لاعبين</option>
+          <option value="5">5 لاعبين</option>
+          <option value="6">6 لاعبين</option>
+          <option value="7">7 لاعبين</option>
+          <option value="8">8 لاعبين</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>كلمة المرور (اختياري)</label>
+        <input type="text" id="new-room-pass" placeholder="اتركها فارغة لغرفة عامة">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('create-room-modal')">إلغاء</button>
+        <button class="btn-primary" onclick="createRoom()">إنشاء ✅</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="password-modal">
+    <div class="modal-content">
+      <h2>🔐 كلمة مرور الغرفة</h2>
+      <p id="pass-room-name" class="modal-subtitle"></p>
+      <div class="input-group">
+        <input type="password" id="join-room-pass" placeholder="أدخل كلمة المرور">
+      </div>
+      <p class="error-msg" id="join-pass-error"></p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('password-modal')">إلغاء</button>
+        <button class="btn-primary" onclick="confirmJoinWithPass()">دخول ✅</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="initial-peek-modal">
+    <div class="modal-content">
+      <h2>👀 اختر ورقتين تشوفهما</h2>
+      <p class="modal-subtitle">اضغط على <span id="peek-left">2</span> ورق لتشاهدهما لمدة 5 ثوانٍ — <b>لن تقدر تغير الاختيار بعد ما تحدد الاثنتين!</b></p>
+      <div class="peek-cards" id="peek-cards"></div>
+      <div class="peek-timer-info" id="peek-timer-info" style="display:none;text-align:center;margin-top:15px;font-weight:700;color:var(--accent-gold);font-size:20px;">⏱️ <span id="peek-countdown">5</span></div>
+    </div>
+  </div>
+
+  <div class="modal" id="action-modal">
+    <div class="modal-content">
+      <h2 id="action-title">أكشن</h2>
+      <div id="action-body"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="results-modal">
+    <div class="modal-content results-modal">
+      <h2>🏁 انتهت الجولة!</h2>
+      <div id="results-body"></div>
+      <div class="modal-actions">
+        <button class="btn-primary big-btn" onclick="closeModal('results-modal')">👍 تمام</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="profile-modal">
+    <div class="modal-content profile-modal">
+      <h2>👤 الملف الشخصي</h2>
+      <div class="profile-body">
+        <div class="profile-pic-section">
+          <div class="pic-wrapper" id="profile-pic-wrapper">
+            <img id="profile-pic" src="">
+            <div class="pic-overlay" onclick="document.getElementById('pic-upload').click()">
+              <span>تغيير الصورة</span>
+            </div>
+          </div>
+          <input type="file" id="pic-upload" accept="image/*" style="display:none" onchange="uploadPic(event)">
+          <h3 id="profile-username"></h3>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🎮</div>
+            <div class="stat-val" id="stat-games">0</div>
+            <div class="stat-label">الألعاب</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-val" id="stat-wins">0</div>
+            <div class="stat-label">الفوز</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💔</div>
+            <div class="stat-val" id="stat-losses">0</div>
+            <div class="stat-label">الخسارة</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🧀</div>
+            <div class="stat-val" id="stat-cheez">0</div>
+            <div class="stat-label">تشيز</div>
+          </div>
+          <div class="stat-card wide">
+            <div class="stat-icon">📊</div>
+            <div class="stat-val" id="stat-points">0</div>
+            <div class="stat-label">مجموع النقاط</div>
+          </div>
+        </div>
+        <div class="achievements-section">
+          <h4>🏅 الإنجازات</h4>
+          <div class="achievements-list" id="achievements-list"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('profile-modal')">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="leaderboard-modal">
+    <div class="modal-content">
+      <h2>🏆 لوحة المتصدرين</h2>
+      <div class="leaderboard-list" id="leaderboard-list"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('leaderboard-modal')">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="friends-modal">
+    <div class="modal-content wide-modal">
+      <h2>👥 الأصدقاء</h2>
+      <div class="tabs">
+        <button class="tab active" data-ftab="list" onclick="switchFriendTab('list')">قائمة الأصدقاء</button>
+        <button class="tab" data-ftab="add" onclick="switchFriendTab('add')">➕ إضافة صديق</button>
+        <button class="tab" data-ftab="requests" onclick="switchFriendTab('requests')">
+          📥 طلبات الصداقة <span class="badge-pill" id="friend-req-tab" style="display:none">0</span>
+        </button>
+      </div>
+      <div class="ftab-content active" id="ftab-list">
+        <div class="friends-list" id="friends-list"></div>
+      </div>
+      <div class="ftab-content" id="ftab-add">
+        <div class="input-group" style="margin-top:15px;">
+          <label>اليوزر الإنجليزي للصديق</label>
+          <input type="text" id="add-friend-user" placeholder="مثال: ahmed12">
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary" onclick="addFriend()">📨 إرسال طلب صداقة</button>
+        </div>
+        <p class="error-msg" id="add-friend-err"></p>
+      </div>
+      <div class="ftab-content" id="ftab-requests">
+        <div class="friends-list" id="friend-requests-list"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('friends-modal')">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="shop-modal">
+    <div class="modal-content wide-modal xwide">
+      <h2>🛒 متجر تشيز</h2>
+      <p class="shop-coins-badge">رصيدك: 💰 <span id="shop-coins">0</span> ذهب</p>
+
+      <div class="admin-coins-box open">
+        <div class="admin-header">➕ إيداع عملات (إدارة المتجر)</div>
+        <div class="admin-coins-body">
+          <div class="admin-row">
+            <div class="input-group" style="flex:1;min-width:160px;margin-bottom:0;">
+              <label>اليوزر الإنجليزي</label>
+              <input type="text" id="admin-user" placeholder="مثال: ahmed12" autocomplete="off">
+            </div>
+            <div class="input-group" style="min-width:120px;margin-bottom:0;">
+              <label>الرمز السري</label>
+              <input type="password" id="admin-secret" placeholder="••••" autocomplete="off">
+            </div>
+            <div class="input-group" style="min-width:110px;margin-bottom:0;">
+              <label>العدد</label>
+              <input type="number" id="admin-amount" placeholder="العملات" value="100" min="1">
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button class="btn-primary big-btn" onclick="adminAddCoins()">💸 إضافة</button>
+            </div>
+          </div>
+          <p class="error-msg" id="admin-err" style="min-height:0;margin-top:8px;"></p>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-stab="back" onclick="switchShopTab('back')">🎴 خلفيات الأوراق</button>
+        <button class="tab" data-stab="table" onclick="switchShopTab('table')">🖼️ أراضٍ الطاولة</button>
+      </div>
+      <div class="shop-grid" id="shop-grid"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('shop-modal')">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- HIDDEN DRAWN CARD -->
+  <div class="drawn-card-panel" id="drawn-panel">
+    <div class="drawn-label-section">
+      <div class="drawn-label">🎴 الورقة المسحوبة:</div>
+      <div class="drawn-type" id="drawn-type"></div>
+    </div>
+    <div class="card big-card" id="drawn-card"></div>
+    <div class="drawn-actions">
+      <div class="drawn-header-text">⬇️ اختر أحد الخيارين:</div>
+      <div class="drawn-btns">
+        <button class="btn-primary big-btn" onclick="chooseToReplace()">🔄 استبدل</button>
+        <button class="btn-danger big-btn" onclick="discardDrawn()">🔥 ارفعها / احرقها</button>
+      </div>
+      <div class="hint-text" id="replace-hint" style="display:none">👆 اختر ورقة من أوراقك (بالأسفل) للاستبدال</div>
+      <div class="drawn-tip">
+        💡 <b>الرفع:</b> أكشن (7,8,10) → تفعل، ورقة عادية → الحرق
+      </div>
+    </div>
+    <div class="drawn-close" onclick="cancelDraw()">✕</div>
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
