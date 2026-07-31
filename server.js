@@ -114,7 +114,7 @@ const userDB = {
   })
 };
 
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
+const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -124,7 +124,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 } });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 app.get('/api/shop/items', (req, res) => {
   res.json(SHOP_ITEMS);
