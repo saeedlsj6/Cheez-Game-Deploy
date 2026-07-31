@@ -649,12 +649,13 @@ function finishInitialPeek() {
       setTimeout(() => {
         initialPeekSelected.forEach(i => {
           if (myCards[i]) myCards[i].revealedToMe = false;
+          if (myCards[i]) myCards[i]._peekedAndHidden = true;
         });
         renderMyCards();
         renderTurn();
         renderOpponents();
         updateDeckCount();
-      }, 100);
+      }, 200);
     }
   }, 1000);
 }
@@ -713,12 +714,17 @@ function togglePeek(idx) {
 socket.on('initial-peek', (revealed) => {
   revealed.forEach(({ index, card }) => {
     if (!card) return;
+    const wasPeekedAndHidden = myCards[index] && myCards[index]._peekedAndHidden;
     myCards[index] = { ...card, index, revealedToMe: initialPeekSelected.includes(index) };
-    if (initialPeekSelected.includes(index)) {
+    if (wasPeekedAndHidden) {
+      myCards[index].revealedToMe = false;
+    }
+    if (initialPeekSelected.includes(index) && !wasPeekedAndHidden) {
       const el = document.getElementById(`peek-${index}`);
       if (el) renderCardData(el, card, true);
     }
   });
+  renderMyCards();
 });
 
 function renderTurn() {
